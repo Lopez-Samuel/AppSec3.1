@@ -1,9 +1,10 @@
 FROM mysql:latest
 
-COPY ./products.csv /products.csv
-COPY ./users.csv /users.csv
-COPY ./setup.sql /docker-entrypoint-initdb.d/setup.sql
+RUN mkdir /data
+COPY ./products.csv /data/products.csv
+COPY ./users.csv /data/users.csv
+COPY ./seeding/db-seed.sql /docker-entrypoint-initdb.d/db-seed.sql
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["mysqld", "--secure-file-priv=/"]
+CMD ["mysqld", "--secure-file-priv=/data"]
 #CMD ["--secure-file-priv=/"]
