@@ -21,9 +21,18 @@ spec:
             - containerPort: 8000
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: thisisatestthing. 
+              valueFrom:
+                secretKeyRef:
+                    name: mysqlrootpassword
+                    key: password
 
-            - name: MYSQL_DB
+            - name: djangosecretkey
+              valueFrom:
+                secretKeyRef:
+                    name: djangosecretkey
+                    key: password
+
+            - name: MYSQL_DATABASE
               value: GiftcardSiteDB
 
             - name: MYSQL_HOST
