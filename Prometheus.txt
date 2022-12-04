@@ -1,0 +1,39 @@
+Part 3
+Part 3.1
+For this part of the assignment, we had to work with Prometheus, which is a metrics monitoring tool that we can use with Kubernetes. The original developers created a bad metric which counted the number of times a new password would appear in the database, the point being if it appeared at all, then it was a bad password since it wasn’t unique. I removed this counter by commenting out:
+        # if pword not in graphs.keys():
+        #     graphs[pword] = Counter(f'counter_{pword}', 'The total number of '\
+        #       + f'times {pword} was used')
+        # graphs[pword].inc()
+The remainder of the metrics used I didn’t deem as insecure or sensitive, so the password one was the only one I removed.
+
+Part 3.2
+For this part of the assignment, we had to create the database_error_return_404 metric. I did this by adding the line below to the views.py file:
+graphs['database_error_return_404'] = Counter('database_error_return_404', 'The total number'\
+  + ' of 404 errors.').
+I then had to add the line:
+       graphs['database_error_return_404'].inc()
+above anywhere I saw:
+      return HttpResponse("ERROR: 404 Not Found.")
+Which would ensure that anytime the app threw 404 error, our counter would increase.
+
+Part 3.3
+For this part we had to install Prometheus and configure it to work with our app on our virtual machine. To do this I ran the commands
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/Prometheus
+kubectl get pods
+To edit the Prometheus cm file, I ran the command below:
+kubectl edit configmap prometheus-server
+And then added the lines below under scrape_configs:
+- job_name: proxy-server
+        static_configs:
+        - targets:
+            - proxy-service:8080
+And then I saved the file. After I ran the command:
+kubectl expose service prometheus-server --type=NodePort --target-port=9090 --name=prometheus-server-np
+minikube service prometheus-server-np
+This command opens the website to the Prometheus client and from here we can see the different metrics including the new 404 counter. I triggered some 404 errors by visiting pages for products that didn’t exist, and this counter increased. 
+# HELP database_error_return_404_total The total number of database_error_return_404.
+database_error_return_404_total 3.0
+# TYPE database_error_return_404_total counter
+# HELP database_error_return_404_created The total number of database_error_return_404.
