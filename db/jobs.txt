@@ -1,0 +1,26 @@
+Part2
+For this part of the assignment, we had to create separate the migration and seeding part of the startup phase since this is currently being done simultaneously with the setup.sql file. For the migration part, I created the migration.yml file which used the commands:
+        command: ["/bin/sh","-c"]
+        args: ["python3 manage.py makemigrations LegacySite;python3 manage.py makemigrations;python3 manage.py migrate"]
+To run this job, I ran:
+kubectl apply -f db/migration/migration.yml
+
+To run the seeding job, I modified the Dockerfile inside the db folder, and added the line:
+	COPY ./seeding/django-seed.sql /docker-entrypoint-initdb.d/django-seed.sql
+
+I then created the django-seed.yaml file which runs the command:
+command: ["/bin/sh"]
+args: ["-c","mysql --user=root --password=${MYSQL_ROOT_PASSWORD} --database=${MYSQL_DATABASE} --host=mysql-service -f < /docker-entrypoint-initdb.d/db-seed.sql"]
+This command connects to the mysql database with the provided password, database name, and host and passes in the db-seed.sql file which has the seeding commands within it. The db-seed.sql file contains the below lines of code:
+
+LOAD DATA INFILE '/data/products.csv' INTO TABLE LegacySite_product FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\r\n';
+LOAD DATA INFILE '/data/users.csv' INTO TABLE LegacySite_user FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\r\n';
+
+I got these lines of code from the setup.sql file which worked to load the data from the CSV files provided into the previously made database.
+I then ran the below command to run the job:
+kubectl apply -f db/seeding/db-seed.yaml
+
+After I ran the commands below to confirm the migration and seeding were successful:
+
+kubectl exec mysql-container-7957f7559c-tl6t4  -- mysql --database="GiftcardSiteDB" --password='thisisatestthing.' -e "Select *FROM LegacySite_product"
+kubectl exec mysql-container-7957f7559c-tl6t4  -- mysql --database="GiftcardSiteDB" --password='thisisatestthing.' -e "Select *FROM LegacySite_users”
